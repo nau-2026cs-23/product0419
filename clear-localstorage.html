@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear LocalStorage</title>
+</head>
+<body>
+    <h1>Clear LocalStorage</h1>
+    <p>Click the button below to clear localStorage.</p>
+    <button onclick="clearStorage()">Clear LocalStorage</button>
+    <script>
+        function clearStorage() {
+            localStorage.removeItem('jimemo_exams');
+            alert('LocalStorage cleared!');
+        }
+    </script>
+</body>
+</html>

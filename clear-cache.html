@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Cache</title>
+</head>
+<body>
+    <h1>Clear Browser Cache</h1>
+    <p>Click the button below to clear localStorage and reload the application.</p>
+    <button onclick="clearCache()">Clear Cache and Reload</button>
+    <script>
+        function clearCache() {
+            localStorage.clear();
+            alert('Cache cleared! Please close this window and reload the application.');
+        }
+    </script>
+</body>
+</html>
