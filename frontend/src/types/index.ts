@@ -5,7 +5,7 @@ export type TaskStatus = 'pending' | 'completed';
 export interface Task {
   id: string;
   title: string;
-  deadline: string; // ISO date string
+  deadline: string;
   source: TaskSource;
   category: TaskCategory;
   status: TaskStatus;
@@ -19,12 +19,12 @@ export interface SystemExam {
   title: string;
   subtitle: string;
   tag: string;
-  date: string; // ISO date string
+  date: string;
   type: 'exam' | 'registration';
   category: 'language' | 'skill';
   isEnabled: boolean;
-  description?: string; // 考试简介
-  registrationUrl?: string; // 报名网址
+  description?: string;
+  registrationUrl?: string;
 }
 
 export interface FeedbackForm {
@@ -39,5 +39,37 @@ export interface AppSettings {
   theme: 'purple' | 'teal' | 'gray';
 }
 
-export type NavTab = 'home' | 'calendar' | 'stats' | 'settings';
+export type NavTab = 'home' | 'calendar' | 'stats' | 'settings' | 'admin';
 export type FilterTab = 'all' | 'week' | 'exam' | 'registration' | 'homework' | 'history';
+
+export interface SystemUser {
+  id: string;
+  username: string;
+  role: 'user' | 'admin';
+  isActive: boolean;
+  createdAt: string;
+  lastLoginAt?: string;
+}
+
+export interface Feedback {
+  id: string;
+  userId: string;
+  username: string;
+  type: 'suggestion' | 'error';
+  content: string;
+  contact?: string;
+  status: 'pending' | 'processed';
+  createdAt: string;
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  isPinned: boolean;
+  isActive: boolean;
+  startTime?: string;
+  endTime?: string;
+  createdAt: string;
+  updatedAt: string;
+}

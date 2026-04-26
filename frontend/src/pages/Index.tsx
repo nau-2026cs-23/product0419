@@ -1,21 +1,21 @@
 import { useState, useEffect } from 'react';
-import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import OmniflowBadge from '@/components/custom/OmniflowBadge';
 import HomeView from '@/components/custom/HomeView';
 import CalendarView from '@/components/custom/CalendarView';
 import StatsView from '@/components/custom/StatsView';
 import SettingsView from '@/components/custom/SettingsView';
+import AdminView from '@/components/custom/AdminView';
 import type { Task, SystemExam, NavTab, AppSettings } from '@/types';
 import { SYSTEM_EXAMS, INITIAL_MANUAL_TASKS } from '@/lib/data';
+import { useAuth } from '@/contexts/AuthContext';
 
-const STORAGE_KEY_TASKS = 'jimemo_tasks';
-const STORAGE_KEY_SETTINGS = 'jimemo_settings';
-const STORAGE_KEY_EXAMS = 'jimemo_exams';
+// 生成基于用户ID的存储键
+const getStorageKey = (key: string, userId: string) => `jimemo_${key}_${userId}`;
 
-function loadTasks(): Task[] {
+function loadTasks(userId: string): Task[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_TASKS);
+    const raw = localStorage.getItem(getStorageKey('tasks', userId));
     if (raw) return JSON.parse(raw) as Task[];
   } catch {
     // ignore
@@ -23,9 +23,9 @@ function loadTasks(): Task[] {
   return INITIAL_MANUAL_TASKS;
 }
 
-function loadSettings(): AppSettings {
+function loadSettings(userId: string): AppSettings {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
+    const raw = localStorage.getItem(getStorageKey('settings', userId));
     if (raw) return JSON.parse(raw) as AppSettings;
   } catch {
     // ignore
@@ -39,9 +39,11 @@ function loadExams(): SystemExam[] {
 }
 
 export default function Index() {
+  const { user, role, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<NavTab>('home');
-  const [tasks, setTasks] = useState<Task[]>(loadTasks);
-  const [settings, setSettings] = useState<AppSettings>(loadSettings);
+  const [adminSubTab, setAdminSubTab] = useState<'users' | 'feedback' | 'announcements'>('users');
+  const [tasks, setTasks] = useState<Task[]>(() => user ? loadTasks(user.id) : []);
+  const [settings, setSettings] = useState<AppSettings>(() => user ? loadSettings(user.id) : { systemRemindersEnabled: true, pushNotificationsEnabled: true, theme: 'purple' });
   const [systemExams, setSystemExams] = useState<SystemExam[]>(loadExams);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -49,20 +51,36 @@ export default function Index() {
   const [newTaskCategory, setNewTaskCategory] = useState<Task['category']>('homework');
   const [addLoading, setAddLoading] = useState(false);
 
-  // Persist tasks
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
-  }, [tasks]);
+  const isAdmin = role === 'admin';
 
-  // Persist settings
+  // 当用户变化时重新加载数据
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
-  }, [settings]);
+    if (user) {
+      setTasks(loadTasks(user.id));
+      setSettings(loadSettings(user.id));
+    }
+  }, [user]);
 
-  // Persist exams
+  // 保存任务数据
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_EXAMS, JSON.stringify(systemExams));
-  }, [systemExams]);
+    if (user) {
+      localStorage.setItem(getStorageKey('tasks', user.id), JSON.stringify(tasks));
+    }
+  }, [tasks, user]);
+
+  // 保存设置数据
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem(getStorageKey('settings', user.id), JSON.stringify(settings));
+    }
+  }, [settings, user]);
+
+  // 保存考试数据
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem(getStorageKey('exams', user.id), JSON.stringify(systemExams));
+    }
+  }, [systemExams, user]);
 
   // Update theme class
   useEffect(() => {
@@ -109,7 +127,7 @@ export default function Index() {
       if (partial.theme === 'purple') {
         toast.success('已切换为粉紫色主题');
       } else if (partial.theme === 'teal') {
-        toast.success('已切换为蓝绿色主题');
+        toast.success('已切换为草绿色主题');
       } else if (partial.theme === 'gray') {
         toast.success('已切换为黑白灰主题');
       }
@@ -161,7 +179,6 @@ export default function Index() {
       <header className="bg-primary sticky top-0 z-50 shadow-lg">
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14">
-            {/* Logo */}
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,7 +191,23 @@ export default function Index() {
               </div>
             </div>
 
-
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className={`px-2 py-0.5 text-xs rounded-full ${isAdmin ? 'bg-red-500/20 text-red-200' : 'bg-purple-500/20 text-purple-200'}`}>
+                  {isAdmin ? '管理员' : '用户'}
+                </span>
+                <span className="text-white/80 text-sm">{user?.username}</span>
+              </div>
+              <button
+                onClick={() => {
+                  logout();
+                  toast.success('已退出登录');
+                }}
+                className="px-3 py-1.5 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              >
+                退出
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -213,6 +246,7 @@ export default function Index() {
             onUpdateSettings={handleUpdateSettings}
           />
         )}
+        {activeTab === 'admin' && <AdminView initialTab={adminSubTab} />}
       </main>
 
       {/* Bottom Navigation + FAB */}
@@ -220,37 +254,83 @@ export default function Index() {
         <div className="bg-primary border-t border-white shadow-xl">
           <div className="max-w-screen-xl mx-auto px-4">
             <div className="flex items-center justify-around h-16 relative">
-              {/* Home */}
-              <button
-                aria-label="首页"
-                onClick={() => setActiveTab('home')}
-                className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
-                  activeTab === 'home' 
-                    ? 'text-white bg-secondary/30'
-                    : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
-                }`}
-              >
-                <svg className="w-6 h-6 text-white" fill={activeTab === 'home' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={activeTab === 'home' ? 0 : 2} viewBox="0 0 24 24">
-                  <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-                </svg>
-                <span className={`text-xs text-white ${activeTab === 'home' ? 'font-semibold' : ''}`}>首页</span>
-              </button>
+              {isAdmin ? (
+                // Admin navigation items
+                <>
+                  {/* User Management */}
+                  <button
+                    aria-label="用户管理"
+                    onClick={() => {
+                      setActiveTab('admin');
+                      setAdminSubTab('users');
+                    }}
+                    className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
+                      activeTab === 'admin' && adminSubTab === 'users'
+                        ? 'text-white bg-secondary/30'
+                        : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
+                    }`}
+                  >
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <span className={`text-xs text-white ${activeTab === 'admin' && adminSubTab === 'users' ? 'font-semibold' : ''}`}>用户管理</span>
+                  </button>
 
-              {/* Calendar */}
-              <button
-                aria-label="日历"
-                onClick={() => setActiveTab('calendar')}
-                className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
-                  activeTab === 'calendar' 
-                    ? 'text-white bg-secondary/30'
-                    : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
-                }`}
-              >
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={activeTab === 'calendar' ? 2.5 : 2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span className={`text-xs text-white ${activeTab === 'calendar' ? 'font-semibold' : ''}`}>日历</span>
-              </button>
+                  {/* Feedback Management */}
+                  <button
+                    aria-label="反馈管理"
+                    onClick={() => {
+                      setActiveTab('admin');
+                      setAdminSubTab('feedback');
+                    }}
+                    className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
+                      activeTab === 'admin' && adminSubTab === 'feedback'
+                        ? 'text-white bg-secondary/30'
+                        : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
+                    }`}
+                  >
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    </svg>
+                    <span className={`text-xs text-white ${activeTab === 'admin' && adminSubTab === 'feedback' ? 'font-semibold' : ''}`}>反馈管理</span>
+                  </button>
+                </>
+              ) : (
+                // Regular user navigation items
+                <>
+                  {/* Home */}
+                  <button
+                    aria-label="首页"
+                    onClick={() => setActiveTab('home')}
+                    className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
+                      activeTab === 'home'
+                        ? 'text-white bg-secondary/30'
+                        : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
+                    }`}
+                  >
+                    <svg className="w-6 h-6 text-white" fill={activeTab === 'home' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={activeTab === 'home' ? 0 : 2} viewBox="0 0 24 24">
+                      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                    </svg>
+                    <span className={`text-xs text-white ${activeTab === 'home' ? 'font-semibold' : ''}`}>首页</span>
+                  </button>
+
+                  {/* Calendar */}
+                  <button
+                    aria-label="日历"
+                    onClick={() => setActiveTab('calendar')}
+                    className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
+                      activeTab === 'calendar'
+                        ? 'text-white bg-secondary/30'
+                        : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
+                    }`}
+                  >
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={activeTab === 'calendar' ? 2.5 : 2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className={`text-xs text-white ${activeTab === 'calendar' ? 'font-semibold' : ''}`}>日历</span>
+                  </button>
+                </>
+              )}
 
               {/* FAB - Add Task */}
               <div className="relative -top-5">
@@ -265,28 +345,55 @@ export default function Index() {
                 </button>
               </div>
 
-              {/* Stats */}
-              <button
-                aria-label="统计"
-                onClick={() => setActiveTab('stats')}
-                className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
-                  activeTab === 'stats' 
-                    ? 'text-white bg-secondary/30'
-                    : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
-                }`}
-              >
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={activeTab === 'stats' ? 2.5 : 2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span className={`text-xs text-white ${activeTab === 'stats' ? 'font-semibold' : ''}`}>统计</span>
-              </button>
+              {isAdmin ? (
+                // Admin navigation items (continued)
+                <>
+                  {/* Announcement Management */}
+                  <button
+                    aria-label="公告管理"
+                    onClick={() => {
+                      setActiveTab('admin');
+                      setAdminSubTab('announcements');
+                    }}
+                    className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
+                      activeTab === 'admin' && adminSubTab === 'announcements'
+                        ? 'text-white bg-secondary/30'
+                        : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
+                    }`}
+                  >
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span className={`text-xs text-white ${activeTab === 'admin' && adminSubTab === 'announcements' ? 'font-semibold' : ''}`}>公告管理</span>
+                  </button>
+                </>
+              ) : (
+                // Regular user navigation items (continued)
+                <>
+                  {/* Stats */}
+                  <button
+                    aria-label="统计"
+                    onClick={() => setActiveTab('stats')}
+                    className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
+                      activeTab === 'stats'
+                        ? 'text-white bg-secondary/30'
+                        : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
+                    }`}
+                  >
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={activeTab === 'stats' ? 2.5 : 2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span className={`text-xs text-white ${activeTab === 'stats' ? 'font-semibold' : ''}`}>统计</span>
+                  </button>
+                </>
+              )}
 
               {/* Settings */}
               <button
                 aria-label="设置"
                 onClick={() => setActiveTab('settings')}
                 className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
-                  activeTab === 'settings' 
+                  activeTab === 'settings'
                     ? 'text-white bg-secondary/30'
                     : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
                 }`}
@@ -392,7 +499,6 @@ export default function Index() {
       )}
 
       <OmniflowBadge />
-      <Toaster />
     </div>
   );
 }

@@ -74,16 +74,23 @@ export default function CalendarView({ tasks, systemExams, systemRemindersEnable
 
   const selectedEvents = selectedDate ? (eventMap[selectedDate] || []) : [];
 
-  // Upcoming events list (next 30 days)
-  const upcomingEvents = useMemo(() => {
-    const events: Array<{ date: string; title: string; type: 'task' | 'system'; tag?: string; days: number }> = [];
+  // Today's events timeline (next 24 hours)
+  const todayEvents = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const events: Array<{ date: string; title: string; type: 'task' | 'system'; tag?: string; time: string }> = [];
 
     tasks
       .filter((t) => t.status === 'pending' && !t.isArchived)
       .forEach((t) => {
-        const days = getDaysUntil(t.deadline);
-        if (days >= 0 && days <= 30) {
-          events.push({ date: t.deadline, title: t.title, type: 'task', tag: t.tag, days });
+        const taskDate = new Date(t.deadline);
+        if (taskDate >= today && taskDate < tomorrow) {
+          const hours = taskDate.getHours().toString().padStart(2, '0');
+          const minutes = taskDate.getMinutes().toString().padStart(2, '0');
+          events.push({ date: t.deadline, title: t.title, type: 'task', tag: t.tag, time: `${hours}:${minutes}` });
         }
       });
 
@@ -91,14 +98,16 @@ export default function CalendarView({ tasks, systemExams, systemRemindersEnable
       systemExams
         .filter((e) => !isExpired(e.date))
         .forEach((e) => {
-          const days = getDaysUntil(e.date);
-          if (days >= 0 && days <= 30) {
-            events.push({ date: e.date, title: e.title, type: 'system', tag: e.tag, days });
+          const examDate = new Date(e.date);
+          if (examDate >= today && examDate < tomorrow) {
+            const hours = examDate.getHours().toString().padStart(2, '0');
+            const minutes = examDate.getMinutes().toString().padStart(2, '0');
+            events.push({ date: e.date, title: e.title, type: 'system', tag: e.tag, time: `${hours}:${minutes}` });
           }
         });
     }
 
-    return events.sort((a, b) => a.days - b.days);
+    return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [tasks, systemExams, systemRemindersEnabled]);
 
   return (
@@ -230,43 +239,48 @@ export default function CalendarView({ tasks, systemExams, systemRemindersEnable
           </div>
         )}
 
-        {/* Upcoming 30 days */}
+        {/* Today's events timeline */}
         <div>
-          <h3 className="font-bold text-foreground text-base mb-3">未来30天事项</h3>
-          {upcomingEvents.length === 0 ? (
+          <h3 className="font-bold text-foreground text-base mb-3">一天内事项</h3>
+          {todayEvents.length === 0 ? (
             <div className="bg-secondary rounded-2xl border border-white p-6 text-center">
               <div className="text-3xl mb-2">🎉</div>
-              <div className="text-foreground text-sm">未来30天没有待办事项</div>
+              <div className="text-foreground text-sm">今天没有待办事项</div>
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
-              {upcomingEvents.map((ev, idx) => (
-                <div key={idx} className="bg-secondary rounded-xl border border-white p-3 flex items-center gap-3 hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-                  <div
-                    className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${
-                      ev.days <= 3 ? 'bg-red-100' : ev.days <= 7 ? 'bg-amber-100' : 'bg-blue-50'
-                    }`}
-                  >
-                    <span
-                      className={`text-lg font-bold leading-none ${
-                        ev.days <= 3 ? 'text-red-500' : ev.days <= 7 ? 'text-amber-500' : 'text-foreground'
-                      }`}
-                    >
-                      {ev.days}
-                    </span>
-                    <span className="text-foreground text-xs">天</span>
+            <div className="bg-secondary rounded-2xl border border-white p-4">
+              <div className="space-y-4">
+                {todayEvents.map((ev, idx) => (
+                  <div key={idx} className="flex items-start gap-3 relative">
+                    {/* Timeline line */}
+                    {idx < todayEvents.length - 1 && (
+                      <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-white/30" />
+                    )}
+                    {/* Time dot */}
+                    <div className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center flex-shrink-0 z-10">
+                      <span className="text-foreground text-xs font-medium">{ev.time}</span>
+                    </div>
+                    {/* Event content */}
+                    <div className="flex-1 bg-white/20 rounded-lg p-3 hover:bg-white/30 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="text-foreground text-sm font-semibold">{ev.title}</div>
+                        {ev.tag && (
+                          <span className="bg-white/50 text-foreground text-xs font-medium px-2 py-0.5 rounded-full">
+                            {ev.tag}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-foreground text-xs mt-1 flex items-center gap-2">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" strokeWidth="2" />
+                          <path d="M8 21h8M12 17v4" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                        {formatDate(ev.date)}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-foreground text-sm font-semibold truncate">{ev.title}</div>
-                    <div className="text-foreground text-xs mt-0.5">{formatDate(ev.date)}</div>
-                  </div>
-                  {ev.tag && (
-                    <span className="bg-white/50 text-foreground text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0">
-                      {ev.tag}
-                    </span>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </div>
