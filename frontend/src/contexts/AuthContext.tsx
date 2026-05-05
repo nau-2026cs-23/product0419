@@ -35,7 +35,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const userStr = localStorage.getItem('user');
     if (userStr) {
       try {
-        return JSON.parse(userStr);
+        const parsed = JSON.parse(userStr);
+        // Ensure role field exists
+        if (parsed && typeof parsed.role === 'string') {
+          return parsed as User;
+        }
+        return null;
       } catch {
         return null;
       }

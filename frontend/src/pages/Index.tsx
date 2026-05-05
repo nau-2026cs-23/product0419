@@ -40,7 +40,8 @@ function loadExams(): SystemExam[] {
 
 export default function Index() {
   const { user, role, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<NavTab>('home');
+  const isAdmin = role === 'admin';
+  const [activeTab, setActiveTab] = useState<NavTab>(isAdmin ? 'admin' : 'home');
   const [adminSubTab, setAdminSubTab] = useState<'users' | 'feedback' | 'announcements'>('users');
   const [tasks, setTasks] = useState<Task[]>(() => user ? loadTasks(user.id) : []);
   const [settings, setSettings] = useState<AppSettings>(() => user ? loadSettings(user.id) : { systemRemindersEnabled: true, pushNotificationsEnabled: true, theme: 'purple' });
@@ -51,8 +52,6 @@ export default function Index() {
   const [newTaskCategory, setNewTaskCategory] = useState<Task['category']>('homework');
   const [addLoading, setAddLoading] = useState(false);
 
-  const isAdmin = role === 'admin';
-
   // 当用户变化时重新加载数据
   useEffect(() => {
     if (user) {
@@ -60,6 +59,14 @@ export default function Index() {
       setSettings(loadSettings(user.id));
     }
   }, [user]);
+
+  // 当管理员首次登录时自动切换到管理员界面
+  useEffect(() => {
+    if (isAdmin && activeTab !== 'admin') {
+      setActiveTab('admin');
+      setAdminSubTab('users');
+    }
+  }, [isAdmin]);
 
   // 保存任务数据
   useEffect(() => {
@@ -152,7 +159,7 @@ export default function Index() {
         source: 'manual',
         category: newTaskCategory,
         status: 'pending',
-        tag: newTaskCategory === 'homework' ? '作业' : newTaskCategory === 'exam' ? '考试' : newTaskCategory === 'registration' ? '报名' : undefined,
+        tag: newTaskCategory === 'homework' ? '作业' : newTaskCategory === 'exam' ? '考试' : newTaskCategory === 'registration' ? '报名' : newTaskCategory === 'competition' ? '竞赛' : undefined,
         isArchived: false,
         createdAt: new Date().toISOString(),
       };
@@ -176,11 +183,11 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background font-[system-ui]">
       {/* Top Navigation Header */}
-      <header className="bg-primary sticky top-0 z-50 shadow-lg">
+      <header className={`sticky top-0 z-50 shadow-lg ${settings.theme === 'purple' ? 'bg-gradient-to-r from-purple-600 to-pink-500' : settings.theme === 'teal' ? 'bg-gradient-to-r from-teal-600 to-green-500' : 'bg-gradient-to-r from-gray-700 to-slate-600'}`}>
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -193,7 +200,7 @@ export default function Index() {
 
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <span className={`px-2 py-0.5 text-xs rounded-full ${isAdmin ? 'bg-red-500/20 text-red-200' : 'bg-purple-500/20 text-purple-200'}`}>
+                <span className={`px-2 py-0.5 text-xs rounded-full ${settings.theme === 'purple' ? 'bg-purple-300/20 text-purple-200' : settings.theme === 'teal' ? 'bg-teal-300/20 text-teal-200' : 'bg-gray-300/20 text-gray-200'}`}>
                   {isAdmin ? '管理员' : '用户'}
                 </span>
                 <span className="text-white/80 text-sm">{user?.username}</span>
@@ -224,6 +231,7 @@ export default function Index() {
             onEditTask={handleEditTask}
             onToggleSystemReminders={handleToggleSystemReminders}
             onOpenAddTask={() => setShowAddModal(true)}
+            theme={settings.theme}
           />
         )}
         {activeTab === 'calendar' && (
@@ -231,6 +239,7 @@ export default function Index() {
             tasks={tasks}
             systemExams={systemExams}
             systemRemindersEnabled={settings.systemRemindersEnabled}
+            theme={settings.theme}
           />
         )}
         {activeTab === 'stats' && (
@@ -238,20 +247,24 @@ export default function Index() {
             tasks={tasks}
             systemExams={systemExams}
             systemRemindersEnabled={settings.systemRemindersEnabled}
+            theme={settings.theme}
           />
         )}
         {activeTab === 'settings' && (
           <SettingsView
             settings={settings}
             onUpdateSettings={handleUpdateSettings}
+            systemExams={systemExams}
+            onUpdateSystemExams={setSystemExams}
+            theme={settings.theme}
           />
         )}
-        {activeTab === 'admin' && <AdminView initialTab={adminSubTab} />}
+        {activeTab === 'admin' && <AdminView initialTab={adminSubTab} theme={settings.theme} />}
       </main>
 
       {/* Bottom Navigation + FAB */}
       <div className="fixed bottom-0 left-0 right-0 z-30">
-        <div className="bg-primary border-t border-white shadow-xl">
+        <div className={`border-t border-white/20 shadow-xl ${settings.theme === 'purple' ? 'bg-gradient-to-r from-purple-600 to-pink-500' : settings.theme === 'teal' ? 'bg-gradient-to-r from-teal-600 to-green-500' : 'bg-gradient-to-r from-gray-700 to-slate-600'}`}>
           <div className="max-w-screen-xl mx-auto px-4">
             <div className="flex items-center justify-around h-16 relative">
               {isAdmin ? (
@@ -266,14 +279,14 @@ export default function Index() {
                     }}
                     className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
                       activeTab === 'admin' && adminSubTab === 'users'
-                        ? 'text-white bg-secondary/30'
-                        : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
+                        ? 'text-white bg-white/20'
+                        : 'text-white/80 hover:text-white hover:bg-white/10 hover:scale-115'
                     }`}
                   >
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
-                    <span className={`text-xs text-white ${activeTab === 'admin' && adminSubTab === 'users' ? 'font-semibold' : ''}`}>用户管理</span>
+                    <span className={`text-xs ${activeTab === 'admin' && adminSubTab === 'users' ? 'font-semibold text-white' : 'text-white/80'}`}>用户管理</span>
                   </button>
 
                   {/* Feedback Management */}
@@ -285,14 +298,14 @@ export default function Index() {
                     }}
                     className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
                       activeTab === 'admin' && adminSubTab === 'feedback'
-                        ? 'text-white bg-secondary/30'
-                        : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
+                        ? 'text-white bg-white/20'
+                        : 'text-white/80 hover:text-white hover:bg-white/10 hover:scale-115'
                     }`}
                   >
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                     </svg>
-                    <span className={`text-xs text-white ${activeTab === 'admin' && adminSubTab === 'feedback' ? 'font-semibold' : ''}`}>反馈管理</span>
+                    <span className={`text-xs ${activeTab === 'admin' && adminSubTab === 'feedback' ? 'font-semibold text-white' : 'text-white/80'}`}>反馈管理</span>
                   </button>
                 </>
               ) : (
@@ -304,14 +317,14 @@ export default function Index() {
                     onClick={() => setActiveTab('home')}
                     className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
                       activeTab === 'home'
-                        ? 'text-white bg-secondary/30'
-                        : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
+                        ? 'text-white bg-white/20'
+                        : 'text-white/80 hover:text-white hover:bg-white/10 hover:scale-115'
                     }`}
                   >
-                    <svg className="w-6 h-6 text-white" fill={activeTab === 'home' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={activeTab === 'home' ? 0 : 2} viewBox="0 0 24 24">
+                    <svg className="w-6 h-6" fill={activeTab === 'home' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={activeTab === 'home' ? 0 : 2} viewBox="0 0 24 24">
                       <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
                     </svg>
-                    <span className={`text-xs text-white ${activeTab === 'home' ? 'font-semibold' : ''}`}>首页</span>
+                    <span className={`text-xs ${activeTab === 'home' ? 'font-semibold text-white' : 'text-white/80'}`}>首页</span>
                   </button>
 
                   {/* Calendar */}
@@ -320,14 +333,14 @@ export default function Index() {
                     onClick={() => setActiveTab('calendar')}
                     className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
                       activeTab === 'calendar'
-                        ? 'text-white bg-secondary/30'
-                        : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
+                        ? 'text-white bg-white/20'
+                        : 'text-white/80 hover:text-white hover:bg-white/10 hover:scale-115'
                     }`}
                   >
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={activeTab === 'calendar' ? 2.5 : 2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span className={`text-xs text-white ${activeTab === 'calendar' ? 'font-semibold' : ''}`}>日历</span>
+                    <span className={`text-xs ${activeTab === 'calendar' ? 'font-semibold text-white' : 'text-white/80'}`}>日历</span>
                   </button>
                 </>
               )}
@@ -337,7 +350,7 @@ export default function Index() {
                 <button
                   aria-label="添加事项"
                   onClick={() => setShowAddModal(true)}
-                  className="w-14 h-14 bg-secondary rounded-full flex items-center justify-center shadow-xl hover:bg-accent hover:scale-105 transition-all duration-200"
+                  className={`w-14 h-14 rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-all duration-200 ${settings.theme === 'purple' ? 'bg-gradient-to-br from-purple-400 to-pink-400' : settings.theme === 'teal' ? 'bg-gradient-to-br from-teal-400 to-green-400' : 'bg-gradient-to-br from-gray-500 to-slate-500'}`}
                 >
                   <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
@@ -357,14 +370,14 @@ export default function Index() {
                     }}
                     className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
                       activeTab === 'admin' && adminSubTab === 'announcements'
-                        ? 'text-white bg-secondary/30'
-                        : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
+                        ? 'text-white bg-white/20'
+                        : 'text-white/80 hover:text-white hover:bg-white/10 hover:scale-115'
                     }`}
                   >
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    <span className={`text-xs text-white ${activeTab === 'admin' && adminSubTab === 'announcements' ? 'font-semibold' : ''}`}>公告管理</span>
+                    <span className={`text-xs ${activeTab === 'admin' && adminSubTab === 'announcements' ? 'font-semibold text-white' : 'text-white/80'}`}>公告管理</span>
                   </button>
                 </>
               ) : (
@@ -376,14 +389,14 @@ export default function Index() {
                     onClick={() => setActiveTab('stats')}
                     className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
                       activeTab === 'stats'
-                        ? 'text-white bg-secondary/30'
-                        : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
+                        ? 'text-white bg-white/20'
+                        : 'text-white/80 hover:text-white hover:bg-white/10 hover:scale-115'
                     }`}
                   >
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={activeTab === 'stats' ? 2.5 : 2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
-                    <span className={`text-xs text-white ${activeTab === 'stats' ? 'font-semibold' : ''}`}>统计</span>
+                    <span className={`text-xs ${activeTab === 'stats' ? 'font-semibold text-white' : 'text-white/80'}`}>统计</span>
                   </button>
                 </>
               )}
@@ -394,15 +407,15 @@ export default function Index() {
                 onClick={() => setActiveTab('settings')}
                 className={`flex flex-col items-center gap-1 p-3 transition-all duration-200 rounded-full ${
                   activeTab === 'settings'
-                    ? 'text-white bg-secondary/30'
-                    : 'text-white hover:text-white hover:bg-secondary/20 hover:scale-115'
+                    ? 'text-white bg-white/20'
+                    : 'text-white/80 hover:text-white hover:bg-white/10 hover:scale-115'
                 }`}
               >
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={activeTab === 'settings' ? 2.5 : 2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={activeTab === 'settings' ? 2.5 : 2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span className={`text-xs text-white ${activeTab === 'settings' ? 'font-semibold' : ''}`}>设置</span>
+                <span className={`text-xs ${activeTab === 'settings' ? 'font-semibold text-white' : 'text-white/80'}`}>设置</span>
               </button>
             </div>
           </div>
@@ -445,6 +458,7 @@ export default function Index() {
                     { key: 'homework', label: '作业' },
                     { key: 'exam', label: '考试' },
                     { key: 'registration', label: '报名' },
+                    { key: 'competition', label: '竞赛' },
                     { key: 'other', label: '其他' },
                   ] as { key: Task['category']; label: string }[]).map((cat) => (
                     <button

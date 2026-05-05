@@ -11,6 +11,7 @@ interface HomeViewProps {
   onEditTask: (task: Task) => void;
   onToggleSystemReminders: () => void;
   onOpenAddTask: () => void;
+  theme: 'purple' | 'teal' | 'gray';
 }
 
 export default function HomeView({
@@ -22,6 +23,7 @@ export default function HomeView({
   onEditTask,
   onToggleSystemReminders,
   onOpenAddTask,
+  theme,
 }: HomeViewProps) {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [showAllSystem, setShowAllSystem] = useState(false);
@@ -79,6 +81,9 @@ export default function HomeView({
     case 'homework':
       filteredTasks = nonArchived.filter((t) => t.category === 'homework');
       break;
+    case 'competition':
+      filteredTasks = nonArchived.filter((t) => t.category === 'competition');
+      break;
     case 'history':
       filteredTasks = nonArchived.filter((t) => t.status === 'completed');
       break;
@@ -105,6 +110,7 @@ export default function HomeView({
     { key: 'exam', label: '考试' },
     { key: 'registration', label: '报名' },
     { key: 'homework', label: '作业' },
+    { key: 'competition', label: '竞赛' },
     { key: 'history', label: '历史' },
   ];
 
@@ -202,19 +208,19 @@ export default function HomeView({
   return (
     <div className="pb-28">
       {/* Hero Summary Strip */}
-      <div className="bg-primary/80">
+      <div className={`${theme === 'purple' ? 'bg-gradient-to-r from-purple-600 to-pink-600' : theme === 'teal' ? 'bg-gradient-to-r from-teal-600 to-green-600' : 'bg-gradient-to-r from-gray-700 to-slate-700'}`}>
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-4">
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white/20 rounded-xl p-3 text-center">
+            <div className="bg-white/20 backdrop-blur rounded-xl p-3 text-center">
               <div className="text-2xl font-bold text-white">{weekTasks.length}</div>
               <div className="text-white/80 text-xs mt-0.5">本周待办</div>
             </div>
-            <div className="bg-white/20 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-accent-foreground">{systemCount}</div>
+            <div className="bg-white/20 backdrop-blur rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold text-white">{systemCount}</div>
               <div className="text-white/80 text-xs mt-0.5">系统提醒</div>
             </div>
-            <div className="bg-white/20 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-foreground">{completedCount}</div>
+            <div className="bg-white/20 backdrop-blur rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold text-white">{completedCount}</div>
               <div className="text-white/80 text-xs mt-0.5">已完成</div>
             </div>
           </div>
@@ -224,13 +230,21 @@ export default function HomeView({
       {/* Countdown Banner */}
       {nextExam && (
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 mt-4">
-          <div className="bg-primary rounded-2xl p-4 flex items-center gap-4 shadow-lg overflow-hidden relative">
+          <div className={`rounded-2xl p-4 flex items-center gap-4 shadow-lg overflow-hidden relative ${
+            theme === 'purple' ? 'bg-gradient-to-r from-indigo-500 to-purple-500' :
+            theme === 'teal' ? 'bg-gradient-to-r from-cyan-500 to-teal-500' :
+            'bg-gradient-to-r from-slate-600 to-gray-600'
+          }`}>
             <div className="absolute right-0 top-0 w-32 h-full opacity-10">
               <svg viewBox="0 0 100 100" className="w-full h-full" fill="white">
                 <circle cx="80" cy="20" r="40" />
               </svg>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+              theme === 'purple' ? 'bg-white/30' :
+              theme === 'teal' ? 'bg-white/30' :
+              'bg-white/30'
+            }`}>
               <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -238,12 +252,16 @@ export default function HomeView({
             <div className="flex-1 min-w-0">
               <div className="text-white/70 text-xs uppercase tracking-wide">距离下次考试</div>
               <div className="text-white font-bold text-base truncate">{nextExam.title}</div>
-              <div className="text-secondary text-sm font-semibold">
+              <div className="text-white/90 text-sm font-semibold">
                 还有 <span className="text-xl font-bold text-white">{getDaysUntil(nextExam.date)}</span> 天 · {formatDate(nextExam.date)}
               </div>
             </div>
             <div className="flex-shrink-0">
-              <span className="bg-secondary text-white text-xs font-bold px-2 py-1 rounded-full">{nextExam.tag}</span>
+              <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                theme === 'purple' ? 'bg-pink-200 text-pink-800' :
+                theme === 'teal' ? 'bg-teal-200 text-teal-800' :
+                'bg-gray-200 text-gray-800'
+              }`}>{nextExam.tag}</span>
             </div>
           </div>
         </div>
@@ -258,8 +276,8 @@ export default function HomeView({
               onClick={() => setActiveFilter(f.key)}
               className={`flex-shrink-0 text-sm font-medium px-4 py-2 rounded-full transition-all duration-200 ${
                 activeFilter === f.key
-                  ? 'bg-primary text-white font-semibold'
-                  : 'bg-secondary text-foreground hover:bg-primary hover:text-white'
+                  ? `${theme === 'purple' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' : theme === 'teal' ? 'bg-gradient-to-r from-teal-500 to-green-500 text-white' : 'bg-gradient-to-r from-gray-600 to-slate-600 text-white'} font-semibold shadow-md`
+                  : `${theme === 'purple' ? 'bg-purple-50 text-purple-700 hover:bg-purple-100' : theme === 'teal' ? 'bg-teal-50 text-teal-700 hover:bg-teal-100' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`
               }`}
             >
               {f.label}
@@ -274,7 +292,7 @@ export default function HomeView({
         {activeFilter !== 'history' && (
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-black font-bold text-base">
-              {activeFilter === 'all' ? '近天事项' : activeFilter === 'week' ? '本周事项' : activeFilter === 'exam' ? '考试事项' : activeFilter === 'registration' ? '报名事项' : '作业事项'}
+              {activeFilter === 'all' ? '近天事项' : activeFilter === 'week' ? '本周事项' : activeFilter === 'exam' ? '考试事项' : activeFilter === 'registration' ? '报名事项' : activeFilter === 'competition' ? '竞赛事项' : '作业事项'}
             </h2>
             {activeFilter === 'all' && (
               <span className="text-[#0a4313] text-xs">{dateRangeLabel}</span>
@@ -317,18 +335,20 @@ export default function HomeView({
                 </div>
 
                 <div
-                  className={`bg-secondary rounded-2xl border border-white shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-200 group ${
-                    isCompleted ? 'opacity-60' : ''
-                  } ${isSwiped ? '-translate-x-20' : 'translate-x-0'} transition-transform duration-200`}
+                  className={`rounded-2xl border shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-200 group ${
+                    theme === 'purple' ? 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-100' :
+                    theme === 'teal' ? 'bg-gradient-to-br from-teal-50 to-green-50 border-teal-100' :
+                    'bg-gradient-to-br from-gray-50 to-slate-50 border-gray-200'
+                  } ${isCompleted ? 'opacity-60' : ''} ${isSwiped ? '-translate-x-20' : 'translate-x-0'} transition-transform duration-200`}
                 >
                   <div className="flex items-stretch">
                     <div
                       className={`w-1 flex-shrink-0 rounded-l-2xl ${
                         isCompleted
-                          ? 'bg-foreground'
+                          ? theme === 'purple' ? 'bg-purple-400' : theme === 'teal' ? 'bg-teal-400' : 'bg-gray-400'
                           : days <= 3 && days >= 0
                           ? 'bg-red-500'
-                          : 'bg-primary'
+                          : theme === 'purple' ? 'bg-gradient-to-b from-purple-500 to-pink-500' : theme === 'teal' ? 'bg-gradient-to-b from-teal-500 to-green-500' : 'bg-gradient-to-b from-gray-600 to-slate-600'
                       }`}
                     />
                     <div className="flex items-center gap-3 p-4 flex-1 min-w-0">
@@ -338,8 +358,8 @@ export default function HomeView({
                         aria-label={isCompleted ? '取消完成' : '标记完成'}
                         className={`w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors duration-200 ${
                           isCompleted
-                            ? 'bg-foreground border-foreground'
-                            : 'border-white hover:border-foreground'
+                            ? `${theme === 'purple' ? 'bg-purple-500 border-purple-500' : theme === 'teal' ? 'bg-teal-500 border-teal-500' : 'bg-gray-600 border-gray-600'} border-transparent`
+                            : `${theme === 'purple' ? 'border-purple-400 hover:border-purple-600' : theme === 'teal' ? 'border-teal-400 hover:border-teal-600' : 'border-gray-400 hover:border-gray-600'} bg-white/50`
                         }`}
                       >
                         {isCompleted && (
@@ -352,16 +372,18 @@ export default function HomeView({
                       {/* Icon */}
                       <div
                         className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          task.source === 'system' ? 'bg-white/20' : 'bg-white/20'
+                          theme === 'purple' ? 'bg-gradient-to-br from-purple-500 to-pink-500' :
+                          theme === 'teal' ? 'bg-gradient-to-br from-teal-500 to-green-500' :
+                          'bg-gradient-to-br from-gray-600 to-slate-600'
                         }`}
                       >
                         {task.source === 'system' ? (
-                          <svg className="w-5 h-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <rect x="2" y="3" width="20" height="14" rx="2" ry="2" strokeWidth="2" />
                             <path d="M8 21h8M12 17v4" strokeWidth="2" strokeLinecap="round" />
                           </svg>
                         ) : (
-                          <svg className="w-5 h-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                         )}
@@ -372,27 +394,31 @@ export default function HomeView({
                         <div className="flex items-center gap-2 flex-wrap">
                           <span
                             className={`font-semibold text-sm ${
-                              isCompleted ? 'text-foreground line-through' : 'text-foreground'
+                              isCompleted ? 'text-gray-400 line-through' : 'text-gray-800'
                             }`}
                           >
                             {task.title}
                           </span>
                           {!isCompleted && days <= 3 && days >= 0 && (
-                            <span className="bg-red-50 text-red-500 text-xs font-bold px-2 py-0.5 rounded-full">紧急</span>
+                            <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">紧急</span>
                           )}
                           {task.tag && (
-                            <span className="bg-white/20 text-foreground text-xs font-medium px-2 py-0.5 rounded-full">{task.tag}</span>
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                              theme === 'purple' ? 'bg-purple-100 text-purple-700' :
+                              theme === 'teal' ? 'bg-teal-100 text-teal-700' :
+                              'bg-gray-200 text-gray-700'
+                            }`}>{task.tag}</span>
                           )}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                          <svg className="w-3.5 h-3.5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className={`w-3.5 h-3.5 ${theme === 'purple' ? 'text-purple-500' : theme === 'teal' ? 'text-teal-500' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                           {isCompleted ? (
-                            <span className="text-foreground text-xs">{formatDateTime(task.deadline)} · 已完成</span>
+                            <span className="text-gray-400 text-xs">{formatDateTime(task.deadline)} · 已完成</span>
                           ) : (
                             <>
-                              <span className="text-foreground text-xs">{formatDateTime(task.deadline)}</span>
+                              <span className="text-gray-500 text-xs">{formatDateTime(task.deadline)}</span>
                               <span className={`text-xs font-semibold ${getUrgencyColor(days)}`}>
                                 · {days < 0 ? '已过期' : days === 0 ? '今天截止' : `还有${days}天`}
                               </span>
@@ -406,7 +432,9 @@ export default function HomeView({
                         <button
                           onClick={() => handleEditClick(task)}
                           aria-label="修改"
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-foreground hover:bg-muted transition-colors duration-200"
+                          className={`w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/60 transition-colors duration-200 ${
+                            theme === 'purple' ? 'text-purple-600' : theme === 'teal' ? 'text-teal-600' : 'text-gray-600'
+                          }`}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -415,7 +443,9 @@ export default function HomeView({
                         <button
                           onClick={() => handleSwipe(task.id)}
                           aria-label="更多操作"
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-foreground hover:bg-muted transition-colors duration-200"
+                          className={`w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/60 transition-colors duration-200 ${
+                            theme === 'purple' ? 'text-purple-600' : theme === 'teal' ? 'text-teal-600' : 'text-gray-600'
+                          }`}
                         >
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <circle cx="12" cy="5" r="1.5" />
@@ -436,14 +466,22 @@ export default function HomeView({
         {(activeFilter === 'all' || activeFilter === 'exam' || activeFilter === 'registration') && systemRemindersEnabled && (
           <>
             <div className="flex items-center justify-between mt-8 mb-3">
-              <h2 className="text-foreground font-bold text-base">系统内置考试提醒</h2>
+              <h2 className={`font-bold text-base ${
+                theme === 'purple' ? 'text-indigo-700' : theme === 'teal' ? 'text-teal-700' : 'text-gray-700'
+              }`}>系统内置考试提醒</h2>
               <div className="flex items-center gap-2">
-                <span className="text-foreground text-xs">已开启</span>
+                <span className={`text-xs ${
+                  theme === 'purple' ? 'text-indigo-600' : theme === 'teal' ? 'text-teal-600' : 'text-gray-600'
+                }`}>已开启</span>
                 <button
                   role="switch"
                   aria-checked={systemRemindersEnabled}
                   onClick={onToggleSystemReminders}
-                  className="relative w-10 h-6 bg-foreground rounded-full transition-colors duration-200"
+                  className={`relative w-10 h-6 rounded-full transition-colors duration-200 ${
+                    theme === 'purple' ? 'bg-gradient-to-r from-indigo-500 to-purple-500' :
+                    theme === 'teal' ? 'bg-gradient-to-r from-cyan-500 to-teal-500' :
+                    'bg-gradient-to-r from-gray-500 to-slate-500'
+                  }`}
                 >
                   <span className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200" />
                 </button>
@@ -453,73 +491,162 @@ export default function HomeView({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {visibleSystemExams
                 .filter((e) => {
-                  if (activeFilter === 'exam') return e.type === 'exam';
-                  if (activeFilter === 'registration') return e.type === 'registration';
-                  return true;
+                  if (activeFilter === 'exam') return e.type === 'exam' && e.category !== 'competition';
+                  if (activeFilter === 'registration') return e.type === 'registration' && e.category !== 'competition';
+                  return e.category !== 'competition';
                 })
                 .map((exam) => {
                   const days = getDaysUntil(exam.date);
                   return (
                     <div
                       key={exam.id}
-                      className="bg-secondary rounded-2xl border border-white p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 cursor-pointer"
+                      className={`rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 cursor-pointer ${
+                        theme === 'purple' ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100' :
+                        theme === 'teal' ? 'bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-100' :
+                        'bg-gradient-to-br from-slate-50 to-gray-50 border border-slate-200'
+                      }`}
                       onClick={() => setSelectedExam(exam)}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-5 h-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                            theme === 'purple' ? 'bg-gradient-to-br from-blue-500 to-indigo-500' :
+                            theme === 'teal' ? 'bg-gradient-to-br from-cyan-500 to-blue-500' :
+                            'bg-gradient-to-br from-slate-600 to-gray-600'
+                          }`}>
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <rect x="2" y="3" width="20" height="14" rx="2" ry="2" strokeWidth="2" />
                               <path d="M8 21h8M12 17v4" strokeWidth="2" strokeLinecap="round" />
                             </svg>
                           </div>
                           <div>
-                            <div className="font-semibold text-foreground text-sm">{exam.title}</div>
-                            <div className="text-foreground text-xs mt-0.5">{exam.subtitle}</div>
+                            <div className="font-semibold text-gray-800 text-sm">{exam.title}</div>
+                            <div className="text-gray-500 text-xs mt-0.5">{exam.subtitle}</div>
                           </div>
                         </div>
                         <span className={`text-xs font-bold px-2 py-1 rounded-lg flex-shrink-0 ${getCountdownBadgeStyle(days)}`}>
                           {days}天
                         </span>
                       </div>
-                      <div className="mt-3 pt-3 border-t border-white/50 flex items-center justify-between">
-                        <div className="text-foreground text-xs">📅 {formatDate(exam.date)}</div>
+                      <div className={`mt-3 pt-3 border-t flex items-center justify-between ${
+                        theme === 'purple' ? 'border-blue-100' :
+                        theme === 'teal' ? 'border-cyan-100' :
+                        'border-slate-200'
+                      }`}>
+                        <div className="text-gray-500 text-xs">📅 {formatDate(exam.date)}</div>
                         <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 rounded-full bg-foreground" />
-                          <span className="text-foreground text-xs font-medium">提醒已开启</span>
+                          <div className={`w-2 h-2 rounded-full ${
+                            theme === 'purple' ? 'bg-gradient-to-r from-blue-500 to-indigo-500' :
+                            theme === 'teal' ? 'bg-gradient-to-r from-cyan-500 to-blue-500' :
+                            'bg-gradient-to-r from-slate-500 to-gray-500'
+                          }`} />
+                          <span className="text-gray-600 text-xs font-medium">提醒已开启</span>
                         </div>
                       </div>
                     </div>
                   );
                 })}
             </div>
+          </>
+        )}
 
-            {filteredAndSortedSystemExams.length > 4 && (
-              <button
-                onClick={() => setShowAllSystem(!showAllSystem)}
-                className="w-full mt-3 py-3 rounded-2xl border border-white text-foreground text-sm font-medium hover:bg-secondary hover:text-foreground transition-all duration-200 flex items-center justify-center gap-2"
-              >
-                <span>{showAllSystem ? '收起' : `查看全部${filteredAndSortedSystemExams.length}条系统提醒`}</span>
-                <svg
-                  className={`w-4 h-4 transition-transform duration-200 ${showAllSystem ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+        {/* System Competition Reminders Section */}
+        {(activeFilter === 'all' || activeFilter === 'competition') && systemRemindersEnabled && (
+          <>
+            <div className="flex items-center justify-between mt-8 mb-3">
+              <h2 className={`font-bold text-base ${
+                theme === 'purple' ? 'text-pink-700' : theme === 'teal' ? 'text-teal-700' : 'text-gray-700'
+              }`}>系统内置竞赛提醒</h2>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs ${
+                  theme === 'purple' ? 'text-pink-600' : theme === 'teal' ? 'text-teal-600' : 'text-gray-600'
+                }`}>已开启</span>
+                <button
+                  role="switch"
+                  aria-checked={systemRemindersEnabled}
+                  onClick={onToggleSystemReminders}
+                  className={`relative w-10 h-6 rounded-full transition-colors duration-200 ${
+                    theme === 'purple' ? 'bg-gradient-to-r from-pink-500 to-purple-500' :
+                    theme === 'teal' ? 'bg-gradient-to-r from-teal-500 to-green-500' :
+                    'bg-gradient-to-r from-gray-500 to-slate-500'
+                  }`}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-            )}
+                  <span className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200" />
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {visibleSystemExams
+                .filter((e) => {
+                  if (activeFilter === 'competition') return e.type === 'competition' || e.category === 'competition';
+                  return e.category === 'competition';
+                })
+                .map((exam) => {
+                  const days = getDaysUntil(exam.date);
+                  return (
+                    <div
+                        key={exam.id}
+                        className={`rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 cursor-pointer ${
+                          theme === 'purple' ? 'bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100' :
+                          theme === 'teal' ? 'bg-gradient-to-br from-teal-50 to-green-50 border border-teal-100' :
+                          'bg-gradient-to-br from-gray-50 to-slate-50 border border-gray-200'
+                        }`}
+                        onClick={() => setSelectedExam(exam)}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                              theme === 'purple' ? 'bg-gradient-to-br from-purple-500 to-pink-500' :
+                              theme === 'teal' ? 'bg-gradient-to-br from-teal-500 to-green-500' :
+                              'bg-gradient-to-br from-gray-600 to-slate-600'
+                            }`}>
+                              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <div className="font-semibold text-gray-800 text-sm">{exam.title}</div>
+                              <div className="text-gray-500 text-xs mt-0.5">{exam.subtitle}</div>
+                            </div>
+                          </div>
+                          <span className={`text-xs font-bold px-2 py-1 rounded-lg flex-shrink-0 ${getCountdownBadgeStyle(days)}`}>
+                            {days}天
+                          </span>
+                        </div>
+                        <div className={`mt-3 pt-3 border-t flex items-center justify-between ${
+                          theme === 'purple' ? 'border-purple-100' :
+                          theme === 'teal' ? 'border-teal-100' :
+                          'border-gray-200'
+                        }`}>
+                          <div className="text-gray-500 text-xs">📅 {formatDate(exam.date)}</div>
+                          <div className="flex items-center gap-1">
+                            <div className={`w-2 h-2 rounded-full ${
+                              theme === 'purple' ? 'bg-gradient-to-r from-purple-500 to-pink-500' :
+                              theme === 'teal' ? 'bg-gradient-to-r from-teal-500 to-green-500' :
+                              'bg-gradient-to-r from-gray-500 to-slate-500'
+                            }`} />
+                            <span className="text-gray-600 text-xs font-medium">提醒已开启</span>
+                          </div>
+                        </div>
+                      </div>
+                  );
+                })}
+            </div>
           </>
         )}
 
         {/* System reminders disabled state */}
-        {(activeFilter === 'all' || activeFilter === 'exam' || activeFilter === 'registration') && !systemRemindersEnabled && (
+        {(activeFilter === 'all' || activeFilter === 'exam' || activeFilter === 'registration' || activeFilter === 'competition') && !systemRemindersEnabled && (
           <div className="mt-8">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-foreground font-bold text-base">系统内置考试提醒</h2>
+              <h2 className={`font-bold text-base ${
+                theme === 'purple' ? 'text-indigo-700' : theme === 'teal' ? 'text-teal-700' : 'text-gray-700'
+              }`}>系统内置提醒</h2>
               <div className="flex items-center gap-2">
-                <span className="text-foreground text-xs">已关闭</span>
+                <span className={`text-xs ${
+                  theme === 'purple' ? 'text-indigo-600' : theme === 'teal' ? 'text-teal-600' : 'text-gray-600'
+                }`}>已关闭</span>
                 <button
                   role="switch"
                   aria-checked={false}
@@ -530,9 +657,15 @@ export default function HomeView({
                 </button>
               </div>
             </div>
-            <div className="bg-secondary rounded-2xl border border-white p-6 text-center">
+            <div className={`rounded-2xl border p-6 text-center ${
+              theme === 'purple' ? 'bg-purple-50 border-purple-100' :
+              theme === 'teal' ? 'bg-teal-50 border-teal-100' :
+              'bg-gray-50 border-gray-200'
+            }`}>
               <div className="text-3xl mb-2">🔕</div>
-              <div className="text-foreground text-sm">系统提醒已关闭，开启后可查看内置考试日程</div>
+              <div className={`text-sm ${
+                theme === 'purple' ? 'text-purple-600' : theme === 'teal' ? 'text-teal-600' : 'text-gray-600'
+              }`}>系统提醒已关闭，开启后可查看内置考试和竞赛日程</div>
             </div>
           </div>
         )}
@@ -544,8 +677,12 @@ export default function HomeView({
               onClick={() => setArchiveExpanded(!archiveExpanded)}
               className="flex items-center justify-between w-full group"
             >
-              <h2 className="text-foreground font-semibold text-sm uppercase tracking-wide">历史考试归档</h2>
-              <div className="flex items-center gap-1 text-foreground text-xs">
+              <h2 className={`font-semibold text-sm uppercase tracking-wide ${
+                theme === 'purple' ? 'text-indigo-700' : theme === 'teal' ? 'text-teal-700' : 'text-gray-700'
+              }`}>历史考试归档</h2>
+              <div className={`flex items-center gap-1 text-xs ${
+                theme === 'purple' ? 'text-indigo-600' : theme === 'teal' ? 'text-teal-600' : 'text-gray-600'
+              }`}>
                 <span>{archivedExams.length}条记录</span>
                 <svg
                   className={`w-4 h-4 transition-transform duration-200 ${archiveExpanded ? 'rotate-180' : ''}`}
@@ -563,23 +700,37 @@ export default function HomeView({
                 {archivedExams.map((exam) => (
                   <div
                     key={exam.id}
-                    className="bg-secondary rounded-xl border border-white p-3 flex items-center gap-3 opacity-50"
+                    className={`rounded-xl border p-3 flex items-center gap-3 opacity-50 ${
+                      theme === 'purple' ? 'bg-purple-50 border-purple-100' :
+                      theme === 'teal' ? 'bg-teal-50 border-teal-100' :
+                      'bg-gray-50 border-gray-200'
+                    }`}
                   >
-                    <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      theme === 'purple' ? 'bg-gradient-to-br from-purple-400 to-pink-400' :
+                      theme === 'teal' ? 'bg-gradient-to-br from-teal-400 to-green-400' :
+                      'bg-gradient-to-br from-gray-400 to-slate-400'
+                    }`}>
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <rect x="2" y="3" width="20" height="14" rx="2" ry="2" strokeWidth="2" />
                         <path d="M8 21h8M12 17v4" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-foreground text-sm font-medium line-through">{exam.title}</div>
-                      <div className="text-foreground text-xs">{formatDate(exam.date)} · 已过期</div>
+                      <div className="text-gray-500 text-sm font-medium line-through">{exam.title}</div>
+                      <div className="text-gray-400 text-xs">{formatDate(exam.date)} · 已过期</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-foreground text-xs bg-white/20 px-2 py-0.5 rounded-full">已归档</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        theme === 'purple' ? 'bg-purple-100 text-purple-600' :
+                        theme === 'teal' ? 'bg-teal-100 text-teal-600' :
+                        'bg-gray-200 text-gray-600'
+                      }`}>已归档</span>
                       <button
                         onClick={() => handleDeleteArchiveClick(exam.id)}
-                        className="text-foreground hover:text-red-500 transition-colors"
+                        className={`hover:text-red-500 transition-colors ${
+                          theme === 'purple' ? 'text-purple-400' : theme === 'teal' ? 'text-teal-400' : 'text-gray-400'
+                        }`}
                         aria-label="删除"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -598,13 +749,25 @@ export default function HomeView({
       {/* Delete Confirmation Dialog */}
       {confirmDeleteId && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
-          <div className="bg-background rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-            <h3 className="font-bold text-foreground text-lg mb-2">确认删除</h3>
-            <p className="text-foreground text-sm mb-6">删除后无法恢复，确定要删除这条事项吗？</p>
+          <div className={`rounded-2xl p-6 w-full max-w-sm shadow-2xl ${
+            theme === 'purple' ? 'bg-gradient-to-br from-purple-50 to-pink-50' :
+            theme === 'teal' ? 'bg-gradient-to-br from-teal-50 to-green-50' :
+            'bg-gradient-to-br from-gray-50 to-slate-50'
+          }`}>
+            <h3 className={`font-bold text-lg mb-2 ${
+              theme === 'purple' ? 'text-purple-800' : theme === 'teal' ? 'text-teal-800' : 'text-gray-800'
+            }`}>确认删除</h3>
+            <p className={`text-sm mb-6 ${
+              theme === 'purple' ? 'text-purple-600' : theme === 'teal' ? 'text-teal-600' : 'text-gray-600'
+            }`}>删除后无法恢复，确定要删除这条事项吗？</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDeleteId(null)}
-                className="flex-1 py-2.5 rounded-xl border border-primary text-foreground text-sm font-medium hover:bg-secondary transition-colors"
+                className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+                  theme === 'purple' ? 'border-purple-300 text-purple-700 hover:bg-purple-100' :
+                  theme === 'teal' ? 'border-teal-300 text-teal-700 hover:bg-teal-100' :
+                  'border-gray-300 text-gray-700 hover:bg-gray-100'
+                }`}
               >
                 取消
               </button>
@@ -622,13 +785,25 @@ export default function HomeView({
       {/* Archive Delete Confirmation Dialog */}
       {confirmDeleteArchiveId && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
-          <div className="bg-background rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-            <h3 className="font-bold text-foreground text-lg mb-2">确认删除</h3>
-            <p className="text-foreground text-sm mb-6">删除后无法恢复，确定要删除这条归档考试吗？</p>
+          <div className={`rounded-2xl p-6 w-full max-w-sm shadow-2xl ${
+            theme === 'purple' ? 'bg-gradient-to-br from-purple-50 to-pink-50' :
+            theme === 'teal' ? 'bg-gradient-to-br from-teal-50 to-green-50' :
+            'bg-gradient-to-br from-gray-50 to-slate-50'
+          }`}>
+            <h3 className={`font-bold text-lg mb-2 ${
+              theme === 'purple' ? 'text-purple-800' : theme === 'teal' ? 'text-teal-800' : 'text-gray-800'
+            }`}>确认删除</h3>
+            <p className={`text-sm mb-6 ${
+              theme === 'purple' ? 'text-purple-600' : theme === 'teal' ? 'text-teal-600' : 'text-gray-600'
+            }`}>删除后无法恢复，确定要删除这条归档考试吗？</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDeleteArchiveId(null)}
-                className="flex-1 py-2.5 rounded-xl border border-primary text-foreground text-sm font-medium hover:bg-secondary transition-colors"
+                className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+                  theme === 'purple' ? 'border-purple-300 text-purple-700 hover:bg-purple-100' :
+                  theme === 'teal' ? 'border-teal-300 text-teal-700 hover:bg-teal-100' :
+                  'border-gray-300 text-gray-700 hover:bg-gray-100'
+                }`}
               >
                 取消
               </button>
@@ -646,40 +821,64 @@ export default function HomeView({
       {/* Edit Task Modal */}
       {isEditModalOpen && editingTask && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
-          <div className="bg-background rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-            <h3 className="font-bold text-foreground text-lg mb-4">修改事项</h3>
+          <div className={`rounded-2xl p-6 w-full max-w-sm shadow-2xl ${
+            theme === 'purple' ? 'bg-gradient-to-br from-purple-50 to-pink-50' :
+            theme === 'teal' ? 'bg-gradient-to-br from-teal-50 to-green-50' :
+            'bg-gradient-to-br from-gray-50 to-slate-50'
+          }`}>
+            <h3 className={`font-bold text-lg mb-4 ${
+              theme === 'purple' ? 'text-purple-800' : theme === 'teal' ? 'text-teal-800' : 'text-gray-800'
+            }`}>修改事项</h3>
             <form onSubmit={(e) => { e.preventDefault(); handleEditSubmit(); }}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-foreground text-sm font-medium mb-1">标题</label>
+                  <label className={`block text-sm font-medium mb-1 ${
+                    theme === 'purple' ? 'text-purple-700' : theme === 'teal' ? 'text-teal-700' : 'text-gray-700'
+                  }`}>标题</label>
                   <input
                     type="text"
                     name="title"
                     value={editForm.title}
                     onChange={handleEditChange}
-                    className="w-full px-4 py-2 rounded-xl border border-white bg-white/5 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className={`w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 ${
+                      theme === 'purple' ? 'border-purple-200 focus:ring-purple-400 bg-white/80' :
+                      theme === 'teal' ? 'border-teal-200 focus:ring-teal-400 bg-white/80' :
+                      'border-gray-200 focus:ring-gray-400 bg-white/80'
+                    }`}
                     placeholder="输入事项标题"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-foreground text-sm font-medium mb-1">截止日期</label>
+                  <label className={`block text-sm font-medium mb-1 ${
+                    theme === 'purple' ? 'text-purple-700' : theme === 'teal' ? 'text-teal-700' : 'text-gray-700'
+                  }`}>截止日期</label>
                   <input
                     type="datetime-local"
                     name="deadline"
                     value={editForm.deadline}
                     onChange={handleEditChange}
-                    className="w-full px-4 py-2 rounded-xl border border-white bg-white/5 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className={`w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 ${
+                      theme === 'purple' ? 'border-purple-200 focus:ring-purple-400 bg-white/80' :
+                      theme === 'teal' ? 'border-teal-200 focus:ring-teal-400 bg-white/80' :
+                      'border-gray-200 focus:ring-gray-400 bg-white/80'
+                    }`}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-foreground text-sm font-medium mb-1">分类</label>
+                  <label className={`block text-sm font-medium mb-1 ${
+                    theme === 'purple' ? 'text-purple-700' : theme === 'teal' ? 'text-teal-700' : 'text-gray-700'
+                  }`}>分类</label>
                   <select
                     name="category"
                     value={editForm.category}
                     onChange={handleEditChange}
-                    className="w-full px-4 py-2 rounded-xl border border-white bg-white/5 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className={`w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 ${
+                      theme === 'purple' ? 'border-purple-200 focus:ring-purple-400 bg-white/80' :
+                      theme === 'teal' ? 'border-teal-200 focus:ring-teal-400 bg-white/80' :
+                      'border-gray-200 focus:ring-gray-400 bg-white/80'
+                    }`}
                   >
                     <option value="homework">作业</option>
                     <option value="exam">考试</option>
@@ -693,13 +892,21 @@ export default function HomeView({
                 <button
                   type="button"
                   onClick={handleEditCancel}
-                  className="flex-1 py-2.5 rounded-xl border border-primary text-foreground text-sm font-medium hover:bg-secondary transition-colors"
+                  className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+                    theme === 'purple' ? 'border-purple-300 text-purple-700 hover:bg-purple-100' :
+                    theme === 'teal' ? 'border-teal-300 text-teal-700 hover:bg-teal-100' :
+                    'border-gray-300 text-gray-700 hover:bg-gray-100'
+                  }`}
                 >
                   取消
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/80 transition-colors"
+                  className={`flex-1 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors ${
+                    theme === 'purple' ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90' :
+                    theme === 'teal' ? 'bg-gradient-to-r from-teal-500 to-green-500 hover:opacity-90' :
+                    'bg-gradient-to-r from-gray-600 to-slate-600 hover:opacity-90'
+                  }`}
                 >
                   保存修改
                 </button>
@@ -712,45 +919,71 @@ export default function HomeView({
       {/* Exam Details Modal */}
       {selectedExam && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
-          <div className="bg-background rounded-2xl p-6 w-full max-w-md shadow-2xl">
+          <div className={`rounded-2xl p-6 w-full max-w-md shadow-2xl ${
+            theme === 'purple' ? 'bg-gradient-to-br from-purple-50 to-pink-50' :
+            theme === 'teal' ? 'bg-gradient-to-br from-teal-50 to-green-50' :
+            'bg-gradient-to-br from-gray-50 to-slate-50'
+          }`}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-foreground text-lg">{selectedExam.title}</h3>
+              <h3 className={`font-bold text-lg ${
+                theme === 'purple' ? 'text-purple-800' : theme === 'teal' ? 'text-teal-800' : 'text-gray-800'
+              }`}>{selectedExam.title}</h3>
               <button
                 onClick={() => setSelectedExam(null)}
-                className="w-8 h-8 rounded-full bg-white/30 flex items-center justify-center hover:bg-white/50 transition-colors"
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                  theme === 'purple' ? 'bg-purple-200 hover:bg-purple-300' :
+                  theme === 'teal' ? 'bg-teal-200 hover:bg-teal-300' :
+                  'bg-gray-200 hover:bg-gray-300'
+                }`}
               >
-                <svg className="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-4 h-4 ${
+                  theme === 'purple' ? 'text-purple-700' : theme === 'teal' ? 'text-teal-700' : 'text-gray-700'
+                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <div className="text-foreground text-sm mb-3">{selectedExam.subtitle}</div>
-            <div className="text-foreground text-sm mb-4">
+            <div className={`text-sm mb-3 ${
+              theme === 'purple' ? 'text-purple-600' : theme === 'teal' ? 'text-teal-600' : 'text-gray-600'
+            }`}>{selectedExam.subtitle}</div>
+            <div className={`text-sm mb-4 ${
+              theme === 'purple' ? 'text-purple-600' : theme === 'teal' ? 'text-teal-600' : 'text-gray-600'
+            }`}>
               <div className="flex items-center gap-2 mb-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-4 h-4 ${
+                  theme === 'purple' ? 'text-purple-500' : theme === 'teal' ? 'text-teal-500' : 'text-gray-500'
+                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <rect x="2" y="3" width="20" height="14" rx="2" ry="2" strokeWidth="2" />
                   <path d="M8 21h8M12 17v4" strokeWidth="2" strokeLinecap="round" />
                 </svg>
                 {formatDate(selectedExam.date)}
               </div>
               <div className="flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-4 h-4 ${
+                  theme === 'purple' ? 'text-purple-500' : theme === 'teal' ? 'text-teal-500' : 'text-gray-500'
+                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 {selectedExam.tag}
               </div>
             </div>
-            <div className="text-foreground text-sm border-t border-white/50 pt-4">
+            <div className={`text-sm border-t pt-4 ${
+              theme === 'purple' ? 'border-purple-200 text-purple-700' :
+              theme === 'teal' ? 'border-teal-200 text-teal-700' :
+              'border-gray-200 text-gray-700'
+            }`}>
               <h4 className="font-medium mb-2">考试简介</h4>
               <p className="mb-4">{selectedExam.description || '暂无简介'}</p>
               {selectedExam.registrationUrl && (
                 <div>
                   <h4 className="font-medium mb-2">报名网址</h4>
-                  <a 
-                    href={selectedExam.registrationUrl} 
-                    target="_blank" 
+                  <a
+                    href={selectedExam.registrationUrl}
+                    target="_blank"
                     rel="noopener noreferrer"
-                    className="text-foreground underline hover:text-foreground/80 transition-colors"
+                    className={`underline hover:opacity-80 transition-colors ${
+                      theme === 'purple' ? 'text-purple-600' : theme === 'teal' ? 'text-teal-600' : 'text-gray-600'
+                    }`}
                   >
                     {selectedExam.registrationUrl}
                   </a>

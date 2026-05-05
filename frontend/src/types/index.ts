@@ -1,5 +1,5 @@
 export type TaskSource = 'manual' | 'system';
-export type TaskCategory = 'exam' | 'registration' | 'homework' | 'other';
+export type TaskCategory = 'exam' | 'registration' | 'homework' | 'competition' | 'other';
 export type TaskStatus = 'pending' | 'completed';
 
 export interface Task {
@@ -20,8 +20,8 @@ export interface SystemExam {
   subtitle: string;
   tag: string;
   date: string;
-  type: 'exam' | 'registration';
-  category: 'language' | 'skill';
+  type: 'exam' | 'registration' | 'competition';
+  category: 'language' | 'skill' | 'competition';
   isEnabled: boolean;
   description?: string;
   registrationUrl?: string;
@@ -40,7 +40,7 @@ export interface AppSettings {
 }
 
 export type NavTab = 'home' | 'calendar' | 'stats' | 'settings' | 'admin';
-export type FilterTab = 'all' | 'week' | 'exam' | 'registration' | 'homework' | 'history';
+export type FilterTab = 'all' | 'week' | 'exam' | 'registration' | 'homework' | 'competition' | 'history';
 
 export interface SystemUser {
   id: string;
