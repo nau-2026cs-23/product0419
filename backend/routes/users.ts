@@ -43,6 +43,15 @@ const users: User[] = [
     createdAt: '2024-01-01T00:00:00.000Z',
     lastLoginAt: '2024-01-15T10:30:00.000Z',
   },
+  {
+    id: 'user-disabled',
+    username: 'disabled_user',
+    password: bcrypt.hashSync('disabled123', 10),
+    role: 'user',
+    isActive: false,
+    createdAt: '2024-01-10T08:00:00.000Z',
+    lastLoginAt: '2024-01-15T10:30:00.000Z',
+  },
 ];
 
 function authMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -69,14 +78,16 @@ function adminMiddleware(req: express.Request, res: express.Response, next: expr
 }
 
 router.get('/', authMiddleware, adminMiddleware, (req, res) => {
-  const userList = users.map(u => ({
-    id: u.id,
-    username: u.username,
-    role: u.role,
-    isActive: u.isActive,
-    createdAt: u.createdAt,
-    lastLoginAt: u.lastLoginAt,
-  }));
+  const userList = users
+    .filter(u => u.role !== 'admin')
+    .map(u => ({
+      id: u.id,
+      username: u.username,
+      role: u.role,
+      isActive: u.isActive,
+      createdAt: u.createdAt,
+      lastLoginAt: u.lastLoginAt,
+    }));
   return res.json({ success: true, data: userList });
 });
 

@@ -35,6 +35,15 @@ const users: User[] = [
     createdAt: new Date().toISOString(),
     lastLoginAt: new Date().toISOString(),
   },
+  {
+    id: 'user-disabled',
+    username: 'disabled_user',
+    password: bcrypt.hashSync('disabled123', 10),
+    role: 'user',
+    isActive: false,
+    createdAt: '2024-01-10T08:00:00.000Z',
+    lastLoginAt: '2024-01-15T10:30:00.000Z',
+  },
 ];
 
 router.post('/login', (req, res) => {
@@ -47,6 +56,10 @@ router.post('/login', (req, res) => {
   const user = users.find((u) => u.username === username);
   if (!user) {
     return res.status(401).json({ success: false, message: '用户名或密码错误' });
+  }
+
+  if (!user.isActive) {
+    return res.status(401).json({ success: false, message: '用户已被禁用，请联系管理员' });
   }
 
   const isPasswordValid = bcrypt.compareSync(password, user.password);

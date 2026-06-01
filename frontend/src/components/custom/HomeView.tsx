@@ -26,7 +26,8 @@ export default function HomeView({
   theme,
 }: HomeViewProps) {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
-  const [showAllSystem, setShowAllSystem] = useState(false);
+  const [showAllExams, setShowAllExams] = useState(false);
+  const [showAllCompetitions, setShowAllCompetitions] = useState(false);
   const [archiveExpanded, setArchiveExpanded] = useState(false);
   const [swipedTaskId, setSwipedTaskId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -102,7 +103,11 @@ export default function HomeView({
     .filter((e) => !isExpired(e.date))
     .sort((a, b) => getDaysUntil(a.date) - getDaysUntil(b.date));
   
-  const visibleSystemExams = showAllSystem ? filteredAndSortedSystemExams : filteredAndSortedSystemExams.slice(0, 4);
+  const allExams = filteredAndSortedSystemExams.filter((e) => e.category !== 'competition');
+  const allCompetitions = filteredAndSortedSystemExams.filter((e) => e.category === 'competition');
+  
+  const visibleExams = showAllExams ? allExams : allExams.slice(0, 2);
+  const visibleCompetitions = showAllCompetitions ? allCompetitions : allCompetitions.slice(0, 2);
 
   const filters: { key: FilterTab; label: string }[] = [
     { key: 'all', label: '全部' },
@@ -489,11 +494,11 @@ export default function HomeView({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {visibleSystemExams
+              {visibleExams
                 .filter((e) => {
-                  if (activeFilter === 'exam') return e.type === 'exam' && e.category !== 'competition';
-                  if (activeFilter === 'registration') return e.type === 'registration' && e.category !== 'competition';
-                  return e.category !== 'competition';
+                  if (activeFilter === 'exam') return e.type === 'exam';
+                  if (activeFilter === 'registration') return e.type === 'registration';
+                  return true;
                 })
                 .map((exam) => {
                   const days = getDaysUntil(exam.date);
@@ -547,6 +552,27 @@ export default function HomeView({
                   );
                 })}
             </div>
+            
+            {allExams.length > 2 && (
+              <button
+                onClick={() => setShowAllExams(!showAllExams)}
+                className={`mt-3 w-full py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                  theme === 'purple' ? 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100' :
+                  theme === 'teal' ? 'bg-teal-50 text-teal-600 hover:bg-teal-100' :
+                  'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <span>{showAllExams ? '收起' : `展开全部 (${allExams.length}项)`}</span>
+                <svg 
+                  className={`w-4 h-4 transition-transform duration-200 ${showAllExams ? 'rotate-180' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            )}
           </>
         )}
 
@@ -577,11 +603,7 @@ export default function HomeView({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {visibleSystemExams
-                .filter((e) => {
-                  if (activeFilter === 'competition') return e.type === 'competition' || e.category === 'competition';
-                  return e.category === 'competition';
-                })
+              {visibleCompetitions
                 .map((exam) => {
                   const days = getDaysUntil(exam.date);
                   return (
@@ -633,6 +655,27 @@ export default function HomeView({
                   );
                 })}
             </div>
+            
+            {allCompetitions.length > 2 && (
+              <button
+                onClick={() => setShowAllCompetitions(!showAllCompetitions)}
+                className={`mt-3 w-full py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                  theme === 'purple' ? 'bg-pink-50 text-pink-600 hover:bg-pink-100' :
+                  theme === 'teal' ? 'bg-teal-50 text-teal-600 hover:bg-teal-100' :
+                  'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <span>{showAllCompetitions ? '收起' : `展开全部 (${allCompetitions.length}项)`}</span>
+                <svg 
+                  className={`w-4 h-4 transition-transform duration-200 ${showAllCompetitions ? 'rotate-180' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            )}
           </>
         )}
 
